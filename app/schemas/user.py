@@ -1,9 +1,10 @@
-from pydantic import BaseModel, EmailStr
-import datetime
-from pydantic_extra_types.phone_numbers import PhoneNumber
+from datetime import datetime
 from enum import Enum
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr
+from pydantic_extra_types.phone_numbers import PhoneNumber
 from typing import Optional
-import uuid
 
 
 class Role(Enum):
@@ -14,18 +15,30 @@ class Role(Enum):
 
 class UserBase(BaseModel):
     full_name: str
-    dob: datetime.datetime
+    dob: datetime
     delivery_address: str
     phone_number: PhoneNumber
     email: EmailStr
 
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    dob: Optional[datetime] = None
+    delivery_address: Optional[str] = None
+    phone_number: Optional[PhoneNumber] = None
+    email: Optional[EmailStr] = None
+
+
 class UserCreate(UserBase):
     password: str
 
-    role: Optional[Role] = Role.USER
+    role: Role = Role.USER
 
 
 class UserOut(UserBase):
-    id: uuid.UUID
+    id: UUID
     role: Role
+
+
+class UserInDb(UserOut):
+    pass

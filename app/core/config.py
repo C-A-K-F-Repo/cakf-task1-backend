@@ -1,14 +1,20 @@
 """Application configuration."""
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
-from dataclasses import dataclass
-import os
 
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "Task 1 Backend"
+    VERSION: str = "0.1.0"
+    API_V1_PREFIX: str = "/api/v1"
 
-@dataclass(frozen=True)
-class Settings:
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Task 1 Backend")
-    VERSION: str = os.getenv("VERSION", "0.1.0")
-    API_V1_PREFIX: str = os.getenv("API_V1_PREFIX", "/api/v1")
+    TWILIO_ACCOUNT_SID: str
+    TWILIO_AUTH_TOKEN: SecretStr
+    TWILIO_SERVICE_SID: str
+    TWILIO_SENDER_PHONE: PhoneNumber
+
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 
 settings = Settings()

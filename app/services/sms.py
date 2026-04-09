@@ -9,19 +9,21 @@ from app.exceptions.sms import OtpSendError, OtpVerifyError, SmsSendError
 
 
 class SmsService:
+    @staticmethod
     @asynccontextmanager
-    async def _client(self):
+    async def _client():
         http_client = AsyncTwilioHttpClient()
         try:
-            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN.get_secret_value(), http_client=http_client)
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN.get_secret_value(),
+                            http_client=http_client)
             yield client
         finally:
             await http_client.session.close()
-
+    
     async def send_otp(self, phone_num: str) -> None:
         try:
             async with self._client() as client:
-                return await client.verify.v2.services(settings.TWILIO_SERVICE_SID).verifications.create_async(
+                await client.verify.v2.services(settings.TWILIO_SERVICE_SID).verifications.create_async(
                     to=phone_num,
                     channel='sms',
                 )
@@ -42,7 +44,7 @@ class SmsService:
             raise OtpVerifyError(f"Failed to verify OTP") from e
         except Exception as e:
             raise OtpVerifyError("Unexpected error while verifying OTP") from e
-    
+
     async def send_msg(self, phone_num: str, content: str) -> None:
         try:
             async with self._client() as client:

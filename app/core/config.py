@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     TWILIO_SERVICE_SID: str = "sid"
     TWILIO_SENDER_PHONE: str = "phone"
 
+    POSTGRES_USER: str = "user"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "fastapi_db"
+    DATABASE_URL: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 

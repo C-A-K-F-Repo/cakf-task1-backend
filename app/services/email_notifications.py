@@ -3,17 +3,15 @@ import ssl
 import secrets
 from email.message import EmailMessage
 from aiosmtplib import SMTP
-import os
-from dotenv import load_dotenv
+from app.core.config import settings
 
-load_dotenv()
 
 class EmailService:
     def __init__(self):
         self.host = 'smtp.gmail.com'
         self.port = 465
-        self.from_email = os.getenv('FROM_EMAIL')
-        self.password = os.getenv('PASSWORD')
+        self.from_email = settings.FROM_EMAIL
+        self.password = settings.APP_PASSWORD
         self.context = ssl.create_default_context()
 
     async def send_recovery_email(self,email):

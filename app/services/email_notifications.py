@@ -1,7 +1,8 @@
-import smtplib
+import asyncio
 import ssl
 import secrets
 from email.message import EmailMessage
+from aiosmtplib import SMTP
 import os
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ class EmailService:
         self.password = os.getenv('PASSWORD')
         self.context = ssl.create_default_context()
 
-    def send_recovery_email(self,email):
+    async def send_recovery_email(self,email):
         recovery_code= secrets.token_hex(3).upper()
         msg = EmailMessage()
         msg['Subject'] = 'Код для відновлення пароля.'
@@ -44,11 +45,20 @@ class EmailService:
         msg.add_alternative(message, subtype="html")
 
         try:
-            with smtplib.SMTP_SSL(self.host, self.port,context=self.context) as smtp:
-                smtp.login(self.from_email, self.password)
-                smtp.send_message(msg)
+            smtp_client= SMTP(
+                hostname=self.host,
+                port=self.port,
+                use_tls=True,
+                tls_context=self.context
+                )
+            async with smtp_client:
+                await smtp_client.login(self.from_email, self.password)
+                await smtp_client.send_message(msg)
+
+            return recovery_code
         except Exception as e:
             print(f"Error:{e}")
+            return None
 
 email_service = EmailService()
 

@@ -8,3 +8,4 @@ alembic==1.18.4
 twilio==9.10.4
 pydantic-settings==2.13.1
 asyncpg==0.31.0
+google-auth==2.49.2

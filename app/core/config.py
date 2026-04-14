@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     TWILIO_SERVICE_SID: str
     TWILIO_SENDER_PHONE: str
 
+    GOOGLE_CLIENT_ID: str
+
     DB_URL: str
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)

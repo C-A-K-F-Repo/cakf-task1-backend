@@ -11,7 +11,7 @@ class EmailService:
         self.host = 'smtp.gmail.com'
         self.port = 465
         self.from_email = settings.FROM_EMAIL
-        self.password = settings.APP_PASSWORD
+        self.password = settings.APP_PASSWORD.get_secret_value()
         self.context = ssl.create_default_context()
 
     async def send_recovery_email(self,email):

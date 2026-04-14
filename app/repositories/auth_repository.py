@@ -21,12 +21,20 @@ class StoredUser:
     password_hash_hex: str
 
 
+@dataclass
+class IssuedToken:
+    token: str
+    email: str
+    expires_at: datetime
+
+
 class InMemoryAuthRepository:
     """Thread-safe in-memory repository for users."""
 
     def __init__(self) -> None:
         self._lock = Lock()
         self._users_by_email: dict[str, StoredUser] = {}
+        self._tokens_by_value: dict[str, IssuedToken] = {}
 
     def add_user(self, user: StoredUser) -> None:
         """Persist user, raising if email already exists."""
@@ -50,6 +58,21 @@ class InMemoryAuthRepository:
             stored_user.salt_hex = salt_hex
             stored_user.password_hash_hex = password_hash_hex
             return True
+
+    def store_token(self, email: str, token: str, expires_at: datetime) -> None:
+        """Store an issued access token for the user email."""
+        email_key = email.lower()
+        with self._lock:
+            self._tokens_by_value[token] = IssuedToken(
+                token=token,
+                email=email_key,
+                expires_at=expires_at,
+            )
+
+    def get_token(self, token: str) -> IssuedToken | None:
+        """Return an issued token record or None."""
+        with self._lock:
+            return self._tokens_by_value.get(token)
 
 
 auth_repository = InMemoryAuthRepository()

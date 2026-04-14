@@ -1,9 +1,12 @@
-"""Authentication service with registration business logic."""
+"""Authentication service with registration and login business logic."""
 
+from datetime import datetime, timedelta, timezone
+import secrets
 import uuid
 
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.repositories.auth_repository import StoredUser, auth_repository
+from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import Role, UserCreate, UserOut
 
 
@@ -40,6 +43,23 @@ class AuthService:
             email=stored.email,
             role=stored.role,
         )
+
+    def login_user(self, payload: LoginRequest) -> TokenResponse:
+        email_key = str(payload.email).lower()
+        stored_user = auth_repository.get_by_email(email_key)
+
+        if stored_user is None or not verify_password(
+            payload.password,
+            stored_user.salt_hex,
+            stored_user.password_hash_hex,
+        ):
+            raise ValueError("Invalid email or password")
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+        auth_repository.store_token(email_key, token, expires_at)
+
+        return TokenResponse(access_token=token)
 
 
 auth_service = AuthService()

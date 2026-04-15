@@ -27,7 +27,7 @@ class AuthService:
             delivery_address=payload.delivery_address,
             phone_number=str(payload.phone_number),
             email=email_key,
-            role=payload.role or Role.USER,
+            role=Role.USER,
             salt_hex=salt_hex,
             password_hash_hex=password_hash_hex,
         )

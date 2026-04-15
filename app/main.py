@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.observability import setup_observability
 from app.exceptions import register_exceptions
 
 
@@ -17,6 +18,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     register_exceptions(app)
+    setup_observability(app)
     return app
 
 

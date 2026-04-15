@@ -13,21 +13,50 @@ app/
 
 Start the project locally with Docker Compose from the repository root.
 
-1. Start the local stack:
+Use exactly one profile at a time:
+
+- `app`: API + Postgres only. The app runs with `OTEL_ENABLED=false`.
+- `obs`: API + Postgres + OpenTelemetry Collector + VictoriaLogs + VictoriaTraces + Grafana. The app runs with `OTEL_ENABLED=true`.
+
+### App Profile
+
+1. Start the local API and database:
 
    ```bash
-   docker compose -f deployment/local/docker-compose.yaml up --build
+   docker compose -f deployment/local/docker-compose.yaml --profile app up --build
    ```
 
-3. Stop the local stack:
+2. Stop the app profile stack:
 
    ```bash
-   docker compose -f deployment/local/docker-compose.yaml down
+   docker compose -f deployment/local/docker-compose.yaml --profile app down
    ```
 
-4. Open the local endpoints:
+3. Open the local endpoints:
 
    - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
    - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
    - Health check: [http://127.0.0.1:8000/api/v1/health/](http://127.0.0.1:8000/api/v1/health/)
 
+### Obs Profile
+
+1. Start the full local observability stack:
+
+   ```bash
+   docker compose -f deployment/local/docker-compose.yaml --profile obs up --build
+   ```
+
+2. Stop the observability stack:
+
+   ```bash
+   docker compose -f deployment/local/docker-compose.yaml --profile obs down
+   ```
+
+3. Open the local endpoints:
+
+   - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+   - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+   - Health check: [http://127.0.0.1:8000/api/v1/health/](http://127.0.0.1:8000/api/v1/health/)
+   - Grafana: [http://127.0.0.1:3000](http://127.0.0.1:3000) (`admin` / `admin`)
+   - VictoriaLogs health: [http://127.0.0.1:9428/health](http://127.0.0.1:9428/health)
+   - VictoriaTraces health: [http://127.0.0.1:10428/health](http://127.0.0.1:10428/health)

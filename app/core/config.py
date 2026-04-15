@@ -17,6 +17,8 @@ class Settings(BaseSettings):
 
     DB_URL: str
 
+    FRONTEND_URL: str = "http://localhost:5173"
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 

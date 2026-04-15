@@ -15,6 +15,11 @@ class Settings(BaseSettings):
 
     DB_URL: str
 
+    POSTGRES_USER: str = "user"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "fastapi_db"
+    DATABASE_URL: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 

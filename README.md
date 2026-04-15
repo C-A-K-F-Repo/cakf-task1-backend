@@ -1,5 +1,4 @@
-# Task 1 Backend 
-
+# Task 1 Backend
 
 ## Structure
 
@@ -10,15 +9,25 @@ app/
   core/
 ```
 
-## Run
+## Local Startup
 
-1. Install dependencies:
+Start the project locally with Docker Compose from the repository root.
+
+1. Start the local stack:
+
    ```bash
-   pip install -r requirements.txt
-   ```
-2. Start the server:
-   ```bash
-   uvicorn app.main:app --reload
+   docker compose -f deployment/local/docker-compose.yaml up --build
    ```
 
-Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to see OpenAPI docs.
+3. Stop the local stack:
+
+   ```bash
+   docker compose -f deployment/local/docker-compose.yaml down
+   ```
+
+4. Open the local endpoints:
+
+   - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+   - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+   - Health check: [http://127.0.0.1:8000/api/v1/health/](http://127.0.0.1:8000/api/v1/health/)
+

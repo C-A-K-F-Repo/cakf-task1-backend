@@ -1,0 +1,16 @@
+[project]
+name = "cakf-task1-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.4",
+    "email-validator>=2.3.0",
+    "fastapi>=0.135.3",
+    "phonenumbers>=9.0.27",
+    "pydantic-extra-types>=2.11.2",
+    "pydantic-settings>=2.13.1",
+    "twilio>=9.10.4",
+    "uvicorn[standard]>=0.44.0",
+]

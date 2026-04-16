@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 import datetime
 from pydantic_extra_types.phone_numbers import PhoneNumber
 from enum import Enum
@@ -21,7 +21,10 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(
+        min_length=8,
+        pattern=r"^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).+$",
+    )
 
     role: Optional[Role] = Role.USER
 

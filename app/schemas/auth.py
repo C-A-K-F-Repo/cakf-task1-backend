@@ -1,6 +1,6 @@
 """Schemas for authentication endpoints."""
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 from app.schemas.user import UserCreate, UserOut
 
@@ -17,7 +17,7 @@ class LoginRequest(BaseModel):
 	"""Request payload for login endpoint."""
 
 	email: EmailStr
-	password: str = Field(min_length=8)
+	password: str
 
 
 class TokenResponse(BaseModel):

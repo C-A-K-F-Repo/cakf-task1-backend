@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 import datetime
 from pydantic_extra_types.phone_numbers import PhoneNumber
 from enum import Enum
@@ -21,10 +21,16 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(
-        min_length=8,
-        pattern=r"^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9]).+$",
-    )
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, value: str) -> str:
+        has_letter = any(ch.isalpha() for ch in value)
+        has_special = any(not ch.isalnum() for ch in value)
+        if not has_letter or not has_special:
+            raise ValueError("Password must contain at least one letter and one special character")
+        return value
 
     role: Optional[Role] = Role.USER
 

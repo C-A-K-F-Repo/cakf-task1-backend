@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import datetime
-from pydantic_extra_types.phone_numbers import PhoneNumber
+from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
 from enum import Enum
-from typing import Optional
+from typing import Optional, Annotated
 import uuid
 
 
@@ -16,7 +16,7 @@ class UserBase(BaseModel):
     full_name: str
     dob: datetime.datetime
     delivery_address: str
-    phone_number: PhoneNumber
+    phone_number: Annotated[PhoneNumber, PhoneNumberValidator(number_format="E164")]
     email: EmailStr
 
 

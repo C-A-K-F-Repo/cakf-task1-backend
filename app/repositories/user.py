@@ -1,6 +1,8 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+
+from app.core.security import password_hash
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -23,8 +25,7 @@ class UserRepository:
         """Create a new user."""
         user_data = user.model_dump()
         raw_password = user_data.pop("password")
-        # TODO: Hash the password before storing it
-        user_data["hashed_password"] = raw_password
+        user_data["hashed_password"] = password_hash.hash(raw_password)
         
         new_user = User(**user_data)
 
@@ -44,5 +45,15 @@ class UserRepository:
             update(User)
             .where(User.id == user_id)
             .values(is_active=active)
+        )
+        await self.db.commit()
+
+    async def update_password(self, email: str, new_password: str):
+        """Update the user's password."""
+        hashed_password = password_hash.hash(new_password)
+        result = await self.db.execute(
+            update(User)
+            .where(User.email == email)
+            .values(hashed_password=hashed_password)
         )
         await self.db.commit()

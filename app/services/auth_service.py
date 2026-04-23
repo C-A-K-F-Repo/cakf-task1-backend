@@ -4,7 +4,10 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import uuid
 
-from app.core.security import hash_password, verify_password
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import password_hash
+from app.repositories import UserRepository
 from app.repositories.auth_repository import StoredUser, auth_repository
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import Role, UserCreate, UserOut
@@ -13,45 +16,30 @@ from app.schemas.user import Role, UserCreate, UserOut
 class AuthService:
     """Service layer for auth-related use-cases."""
 
-    def register_user(self, payload: UserCreate) -> UserOut:
+    async def register_user(self, db: AsyncSession, payload: UserCreate) -> UserOut:
         email_key = str(payload.email).lower()
 
-        if auth_repository.get_by_email(email_key) is not None:
+        if await UserRepository(db).get_by_email(email_key) is not None:
             raise ValueError("User with this email already exists")
 
-        salt_hex, password_hash_hex = hash_password(payload.password)
-        stored = StoredUser(
-            id=uuid.uuid4(),
-            full_name=payload.full_name,
-            dob=payload.dob,
-            delivery_address=payload.delivery_address,
-            phone_number=str(payload.phone_number),
-            email=email_key,
-            role=Role.USER,
-            salt_hex=salt_hex,
-            password_hash_hex=password_hash_hex,
-        )
-
-        auth_repository.add_user(stored)
+        new_user = await UserRepository(db).create(payload)
 
         return UserOut(
-            id=stored.id,
-            full_name=stored.full_name,
-            dob=stored.dob,
-            delivery_address=stored.delivery_address,
-            phone_number=stored.phone_number,
-            email=stored.email,
-            role=stored.role,
+            id=new_user.id,
+            full_name=new_user.full_name,
+            dob=new_user.dob,
+            delivery_address=new_user.delivery_address,
+            phone_number=new_user.phone_number,
+            email=new_user.email,
+            role=new_user.role,
         )
 
-    def login_user(self, payload: LoginRequest) -> TokenResponse:
+    async def login_user(self, db: AsyncSession, payload: UserCreate) -> TokenResponse:
         email_key = str(payload.email).lower()
-        stored_user = auth_repository.get_by_email(email_key)
+        stored_user = await UserRepository(db).get_by_email(email_key)
 
-        if stored_user is None or not verify_password(
-            payload.password,
-            stored_user.salt_hex,
-            stored_user.password_hash_hex,
+        if stored_user is None or not password_hash.verify(
+                payload.password, stored_user.hashed_password
         ):
             raise ValueError("Invalid email or password")
 

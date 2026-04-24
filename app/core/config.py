@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     LOG_LEVEL: str = "INFO"
     LOG_STDOUT_ENABLED: bool = True
+    JWT_SECRET: SecretStr
 
     OTEL_ENABLED: bool = False
     OTEL_SERVICE_NAME: str = "cakf-task1-backend"

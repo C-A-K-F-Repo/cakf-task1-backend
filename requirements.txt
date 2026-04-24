@@ -14,3 +14,4 @@ opentelemetry-exporter-otlp-proto-http==1.41.0
 opentelemetry-instrumentation-fastapi==0.62b0
 opentelemetry-instrumentation-logging==0.62b0
 opentelemetry-instrumentation-sqlalchemy==0.62b0
+PyJWT==2.12.1

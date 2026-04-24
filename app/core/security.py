@@ -36,7 +36,7 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
 
 def _verify_token(token: str, token_type: TokenType):
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET.get_secret_value(), algorithm=ALGORITHM)
+        payload = jwt.decode(token, settings.JWT_SECRET.get_secret_value(), algorithms=[ALGORITHM])
 
         if payload["typ"] != token_type:
             raise ValueError("Invalid token type")

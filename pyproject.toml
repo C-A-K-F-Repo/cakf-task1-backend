@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "email-validator>=2.3.0",
     "fastapi>=0.135.3",
+    "google-auth>=2.49.2",
     "opentelemetry-api>=1.38.0",
     "opentelemetry-exporter-otlp-proto-http>=1.38.0",
     "opentelemetry-instrumentation-fastapi>=0.59b0",

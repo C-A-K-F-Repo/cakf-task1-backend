@@ -34,6 +34,16 @@ class UserRepository:
         await self.db.refresh(new_user)
         return new_user
 
+    async def create_from_oauth(self, email: str) -> User:
+        new_user = User(
+            email=email,
+        )
+
+        self.db.add(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
+        return new_user
+
     async def delete(self, user_id: UUID) -> None:
         """Delete a user by ID."""
         await self.db.execute(delete(User).where(User.id == user_id))

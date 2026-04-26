@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.db import SessionDep
+from app.dependencies.db import SessionDep
 from app.schemas.acc_rec import AccRecRequest, AccRecReset
 from app.services.acc_rec_service import acc_rec_service
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 import datetime
 from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
 from enum import Enum
@@ -38,3 +38,5 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: uuid.UUID
     role: Role
+
+    model_config = ConfigDict(from_attributes=True)

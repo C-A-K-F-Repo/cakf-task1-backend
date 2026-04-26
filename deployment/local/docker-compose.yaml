@@ -1,0 +1,98 @@
+x-api-common: &api-common
+  build:
+    context: ../..
+    dockerfile: deployment/Dockerfile
+  container_name: fastapi_app
+  ports:
+    - "8000:8000"
+  env_file:
+    - ./.env.local
+  environment: &api-environment
+    UV_LINK_MODE: copy
+  volumes:
+    - ../..:/app
+  command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+services:
+  api:
+    <<: *api-common
+    profiles: ["app"]
+    environment:
+      <<: *api-environment
+      OTEL_ENABLED: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api-obs:
+    <<: *api-common
+    profiles: ["obs"]
+    environment:
+      <<: *api-environment
+      OTEL_ENABLED: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  otel-collector:
+    profiles: ["obs"]
+    image: otel/opentelemetry-collector-contrib:0.122.1
+    container_name: otel_collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4318:4318"
+    depends_on:
+      - victorialogs
+      - victoriatraces
+
+  victorialogs:
+    profiles: ["obs"]
+    image: victoriametrics/victoria-logs:latest
+    container_name: victorialogs
+    ports:
+      - "9428:9428"
+
+  victoriatraces:
+    profiles: ["obs"]
+    image: victoriametrics/victoria-traces:latest
+    container_name: victoriatraces
+    ports:
+      - "10428:10428"
+
+  grafana:
+    profiles: ["obs"]
+    image: grafana/grafana:11.6.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env.local
+    depends_on:
+      - victorialogs
+      - victoriatraces
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  db:
+    profiles: ["app", "obs"]
+    image: postgres:16-alpine
+    container_name: postgres_db
+    env_file:
+      - ./.env.local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d fastapi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  grafana_data:

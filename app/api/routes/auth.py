@@ -1,4 +1,3 @@
-"""Authentication endpoints."""
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -6,16 +5,21 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.dependencies.db import SessionDep
 from app.dependencies.user import get_current_user
-from app.models import User
 from app.repositories import UserRepository
 from app.schemas.auth import RegisterRequest, RegisterResponse, TokenResponse
-from app.schemas.user import UserOut
+from app.schemas.user import UserOut, UserCreate
 from app.services.auth_service import auth_service
 from app.core.security import (
     verify_refresh_token,
     create_access_token,
     create_refresh_token
 )
+
+from app.schemas.google_oauth import CallbackPayload, UserInfoResponse
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from google.auth.exceptions import GoogleAuthError
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -61,3 +65,40 @@ async def refresh(refresh_token: str):
 async def get_me(db: SessionDep, current_user: str = Depends(get_current_user)):
     user = await UserRepository(db).get_by_id(current_user)
     return user
+
+
+@router.post("/google/callback")
+async def google_callback(db: SessionDep, payload: CallbackPayload):
+    try:
+        id_info = id_token.verify_oauth2_token(
+            payload.id_token,
+            requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+
+        validated_info = UserInfoResponse.model_validate(id_info)
+
+        print(validated_info)
+
+        if not validated_info.email_verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not verified"
+            )
+
+        existing_user = await UserRepository(db).get_by_email(validated_info.email)
+
+        if existing_user is None:
+            user = await UserRepository(db).create_from_oauth(validated_info.email)
+        else:
+            user = existing_user
+
+        access_token = create_access_token({"sub": str(user.id)})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    except GoogleAuthError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )

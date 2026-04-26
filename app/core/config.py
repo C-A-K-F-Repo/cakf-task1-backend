@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     TWILIO_SERVICE_SID: str
     TWILIO_SENDER_PHONE: str
 
+    GOOGLE_CLIENT_ID: str
+    FRONTEND_URL: str = "http://localhost:5173"
+
     DB_URL: str
 
     POSTGRES_USER: str = "user"

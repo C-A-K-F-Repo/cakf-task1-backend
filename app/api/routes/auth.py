@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.dependencies.db import SessionDep
-from app.dependencies.user import get_current_user
+from app.dependencies.user import get_current_user, allow_staff
 from app.repositories import UserRepository
 from app.schemas.auth import RegisterRequest, RegisterResponse, TokenResponse
 from app.schemas.user import UserOut, UserCreate
@@ -20,6 +20,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from google.auth.exceptions import GoogleAuthError
 from app.core.config import settings
+from app.dependencies.user import allow_admin
 
 router = APIRouter()
 
@@ -47,13 +48,17 @@ async def login(payload: Annotated[OAuth2PasswordRequestForm, Depends()], db: Se
 
 
 @router.post("/refresh")
-async def refresh(refresh_token: str):
+async def refresh(db: SessionDep, refresh_token: str):
     try:
         payload = verify_refresh_token(refresh_token)
 
         # TODO: blacklist `refresh_token` in redis to prevent replaying
 
-        access_token = create_access_token({"sub": payload["sub"]})
+        user = await UserRepository(db).get_by_id(payload["sub"])
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+        access_token = create_access_token({"sub": payload["sub"], "role": user.role.value})
         refresh_token = create_refresh_token({"sub": payload["sub"]})
 
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
@@ -62,9 +67,14 @@ async def refresh(refresh_token: str):
 
 
 @router.get("/me", response_model=UserOut)
-async def get_me(db: SessionDep, current_user: str = Depends(get_current_user)):
-    user = await UserRepository(db).get_by_id(current_user)
+async def get_me(db: SessionDep, current_user = Depends(get_current_user)):
+    user = await UserRepository(db).get_by_id(current_user["sub"])
     return user
+
+
+@router.get("/staff-only", dependencies=[Depends(allow_staff)])
+async def staff_only():
+    return {"message": "Accessed as admin"}
 
 
 @router.post("/google/callback")
@@ -93,7 +103,7 @@ async def google_callback(db: SessionDep, payload: CallbackPayload):
         else:
             user = existing_user
 
-        access_token = create_access_token({"sub": str(user.id)})
+        access_token = create_access_token({"sub": str(user.id), "role": user.role.value})
         refresh_token = create_refresh_token({"sub": str(user.id)})
 
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)

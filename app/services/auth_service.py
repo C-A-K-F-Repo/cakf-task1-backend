@@ -31,7 +31,7 @@ class AuthService:
         ):
             raise ValueError("Invalid email or password")
 
-        access_token = create_access_token({"sub": str(stored_user.id)})
+        access_token = create_access_token({"sub": str(stored_user.id), "role": stored_user.role.value})
         refresh_token = create_refresh_token({"sub": str(stored_user.id)})
 
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)

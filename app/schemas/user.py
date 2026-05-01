@@ -1,12 +1,12 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 import datetime
 from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
-from enum import Enum
+from enum import StrEnum
 from typing import Optional, Annotated
 import uuid
 
 
-class Role(Enum):
+class Role(StrEnum):
     USER = "User"
     ADVANCED_USER = "Advanced_User"
     ADMINISTRATOR = "Administrator"

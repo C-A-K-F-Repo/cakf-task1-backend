@@ -4,16 +4,7 @@ import secrets
 from email.message import EmailMessage
 from aiosmtplib import SMTP
 from app.core.config import settings
-import redis.asyncio as redis
-
-REDIS_HOST = settings.REDIS_HOST
-REDIS_PORT = settings.REDIS_PORT
-REDIS_PASSWORD = settings.REDIS_PASSWORD
-r = redis.Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    password=REDIS_PASSWORD,
-    decode_responses=True)
+from app.core.redis import get_redis_client
 
 class EmailService:
     def __init__(self):
@@ -24,6 +15,8 @@ class EmailService:
         self.context = ssl.create_default_context()
 
     async def send_recovery_email(self,email):
+        redis = await get_redis_client()
+
         recovery_code= secrets.token_hex(3).upper()
         msg = EmailMessage()
         msg['Subject'] = 'Код для відновлення пароля.'
@@ -61,17 +54,20 @@ class EmailService:
             async with smtp_client:
                 await smtp_client.login(self.from_email, self.password)
                 await smtp_client.send_message(msg)
-            await r.setex(name=email, time=300, value=recovery_code)
+            await redis.setex(name=email, time=300, value=recovery_code)
             return recovery_code
         except Exception as e:
             print(f"Error:{e}")
             return None
 
     async def verify(self,email:str,user_code:str) -> bool:
-        r_code = await r.get(email)
+        redis = await get_redis_client()
+
+        r_code = await redis.get(email)
         if not r_code:
             return False
         if r_code == user_code.upper():
+            await redis.delete(email)
             return True
         return False
 

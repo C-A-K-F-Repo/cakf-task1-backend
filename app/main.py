@@ -6,6 +6,15 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.observability import setup_observability
 from app.exceptions import register_exceptions
+from app.core.redis import get_redis_client, close_redis_client
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    await get_redis_client()
+    yield 
+    await close_redis_client()
 
 
 def create_app() -> FastAPI:

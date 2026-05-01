@@ -1,10 +1,15 @@
-import asyncio
 import ssl
 import secrets
+import logging
 from email.message import EmailMessage
+
+import aiosmtplib
 from aiosmtplib import SMTP
 from app.core.config import settings
 from app.core.redis import get_redis_client
+
+logger = logging.getLogger(__name__)
+
 
 class EmailService:
     def __init__(self):
@@ -56,11 +61,12 @@ class EmailService:
                 await smtp_client.send_message(msg)
             await redis.setex(name=email, time=300, value=recovery_code)
             return recovery_code
-        except Exception as e:
-            print(f"Error:{e}")
+        except aiosmtplib.errors.SMTPException as e:
+            logger.error(f"Error sending email: {e}")
             return None
 
-    async def verify(self,email:str,user_code:str) -> bool:
+    @staticmethod
+    async def verify(email: str,user_code: str) -> bool:
         redis = await get_redis_client()
 
         r_code = await redis.get(email)
@@ -72,7 +78,4 @@ class EmailService:
         return False
 
 
-
-
 email_service = EmailService()
-

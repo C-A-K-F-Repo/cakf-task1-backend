@@ -1,9 +1,9 @@
 from redis.asyncio import ConnectionPool, Redis
-from redis.asyncio.connection import ConnectionError as RedisConnectionError
 from app.core.config import settings 
 
 _pool: ConnectionPool | None = None
 _client: Redis | None = None
+
 
 async def get_redis_client() -> Redis:
     global _pool, _client
@@ -23,6 +23,7 @@ async def get_redis_client() -> Redis:
     )
     _client = Redis(connection_pool=_pool)
     return _client
+
 
 async def close_redis_client() -> None:
     global _pool, _client

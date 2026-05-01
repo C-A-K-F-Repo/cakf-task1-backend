@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_STDOUT_ENABLED: bool = True
     JWT_SECRET: SecretStr
+      
+    FROM_EMAIL: str
+    APP_PASSWORD: SecretStr
+
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str | None = None
 
     OTEL_ENABLED: bool = False
     OTEL_SERVICE_NAME: str = "cakf-task1-backend"

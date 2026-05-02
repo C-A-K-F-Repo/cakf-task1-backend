@@ -8,5 +8,6 @@ class AccRecRequest(BaseModel):
 
 
 class AccRecReset(BaseModel):
-    token: str = Field(min_length=16)
+    email: EmailStr
+    code: str
     new_password: str = Field(min_length=8)

@@ -1,13 +1,10 @@
 """Business logic for account recovery flows."""
 
-from datetime import datetime, timedelta, timezone
-import secrets
 from fastapi import HTTPException, BackgroundTasks
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import UserRepository
-from app.repositories.acc_rec_repository import acc_rec_repository
 from app.schemas.acc_rec import AccRecRequest, AccRecReset
 from app.services.email_notifications import email_service
 

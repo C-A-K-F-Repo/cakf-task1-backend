@@ -49,11 +49,11 @@ class UserRepository:
         await self.db.execute(delete(User).where(User.id == user_id))
         await self.db.commit()
 
-    async def set_active(self, user_id: UUID, active: bool) -> None:
+    async def set_active(self, email: str, active: bool) -> None:
         """Set the user active status."""
         await self.db.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.email == email)
             .values(is_active=active)
         )
         await self.db.commit()

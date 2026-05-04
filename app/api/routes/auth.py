@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.dependencies.db import SessionDep
@@ -21,14 +21,16 @@ from google.auth.transport import requests
 from google.auth.exceptions import GoogleAuthError
 from app.core.config import settings
 from app.dependencies.user import allow_admin
+from app.services.email_notifications import email_service
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, db: SessionDep) -> RegisterResponse:
+async def register(payload: RegisterRequest, db: SessionDep, background_tasks: BackgroundTasks) -> RegisterResponse:
     """Register a new user."""
     try:
+        background_tasks.add_task(email_service.send_verification_email, payload.email)
         return await auth_service.register_user(db, payload)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
@@ -76,6 +78,18 @@ async def get_me(db: SessionDep, current_user = Depends(get_current_user)):
 async def staff_only():
     return {"message": "Accessed as admin"}
 
+@router.post("/email/verify")
+async def verify_email(token: str, db: SessionDep):
+    await email_service.verify_token(db, token)
+    return {"message": "Email verified"}
+
+
+@router.get("/email/request")
+async def get_verify_email(db: SessionDep, background_tasks: BackgroundTasks,
+                           current_user = Depends(get_current_user)):
+    background_tasks.add_task(email_service.send_verification_email, current_user["email"])
+    return {"message": "Email verification sent"}
+
 
 @router.post("/google/callback")
 async def google_callback(db: SessionDep, payload: CallbackPayload):
@@ -103,7 +117,7 @@ async def google_callback(db: SessionDep, payload: CallbackPayload):
         else:
             user = existing_user
 
-        access_token = create_access_token({"sub": str(user.id), "role": user.role.value})
+        access_token = create_access_token({"sub": str(user.id), "email": validated_info.email, "role": user.role.value})
         refresh_token = create_refresh_token({"sub": str(user.id)})
 
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)

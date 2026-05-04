@@ -23,4 +23,6 @@ RUN uv sync --frozen --no-install-project --no-dev
 
 COPY --chown=appuser:appuser . .
 
+RUN uv run alembic upgrade head
+
 CMD ["uv", "run", "fastapi", "run", "app/main.py", "--port", "8000"]

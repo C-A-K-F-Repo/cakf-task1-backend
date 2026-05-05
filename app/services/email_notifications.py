@@ -12,6 +12,8 @@ from app.core.config import settings
 from app.core.redis import get_redis_client
 from app.repositories import UserRepository
 
+from datetime import datetime, timedelta, UTC
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,7 @@ class EmailService:
         self.context = ssl.create_default_context()
 
     async def send_verification_email(self, email):
-        token = jwt.encode({"email": email}, settings.JWT_SECRET.get_secret_value(), algorithm="HS256")
+        token = jwt.encode({"email": email, "exp": datetime.now(UTC) + timedelta(minutes=10)}, settings.JWT_SECRET.get_secret_value(), algorithm="HS256")
         url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
         message = f"""
                     <html>

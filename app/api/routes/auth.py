@@ -80,7 +80,9 @@ async def staff_only():
 
 @router.post("/email/verify")
 async def verify_email(token: str, db: SessionDep):
-    await email_service.verify_token(db, token)
+    result = await email_service.verify_token(db, token)
+    if not result:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="failed to verify email")
     return {"message": "Email verified"}
 
 

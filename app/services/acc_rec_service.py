@@ -1,6 +1,6 @@
 """Business logic for account recovery flows."""
 
-from fastapi import HTTPException, BackgroundTasks
+from fastapi import HTTPException, BackgroundTasks, status
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,13 +17,15 @@ class AccountRecoveryService:
         existing_user = await UserRepository(db).get_by_email(payload.email)
 
         if existing_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
 
         background_tasks.add_task(email_service.send_recovery_email, payload.email)
 
     @staticmethod
     async def reset_password(payload: AccRecReset, db: AsyncSession) -> None:
-        await email_service.verify(payload.email, payload.code)
+        verified = await email_service.verify(payload.email, payload.code)
+        if not verified:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not verified")
 
         await UserRepository(db).update_password(
             email=payload.email,

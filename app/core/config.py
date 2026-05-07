@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_STDOUT_ENABLED: bool = True
     JWT_SECRET: SecretStr
-      
+
     FROM_EMAIL: str
     APP_PASSWORD: SecretStr
 
@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: SecretStr
     TWILIO_SERVICE_SID: str
     TWILIO_SENDER_PHONE: str
+
+    GOOGLE_CLIENT_ID: str
+    FRONTEND_URL: str = "http://localhost:5173"
 
     DB_URL: str
 

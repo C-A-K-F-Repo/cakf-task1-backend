@@ -1,3 +1,9 @@
+import uuid
+
+from pwdlib import PasswordHash
+
+password_hash = PasswordHash.recommended()
+
 from datetime import datetime, UTC, timedelta
 from typing import Literal
 from app.core.config import settings
@@ -13,7 +19,9 @@ def _create_token(data: dict, token_type: TokenType, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.now(UTC) + expires_delta
 
-    to_encode.update({"exp": expire, "typ": token_type})
+    jti = str(uuid.uuid4())
+
+    to_encode.update({"exp": expire, "typ": token_type, "jti": jti})
 
     return jwt.encode(to_encode, settings.JWT_SECRET.get_secret_value(), algorithm=ALGORITHM)
 
@@ -38,6 +46,8 @@ def _verify_token(token: str, token_type: TokenType):
     try:
         payload = jwt.decode(token, settings.JWT_SECRET.get_secret_value(), algorithms=[ALGORITHM])
 
+        # TODO: check if `jti` is present in blacklist
+
         if payload["typ"] != token_type:
             raise ValueError("Invalid token type")
 
@@ -54,3 +64,7 @@ def verify_access_token(token: str):
 
 def verify_refresh_token(token: str):
     return _verify_token(token, "refresh")
+
+
+def revoke_token(jti: str):
+    pass

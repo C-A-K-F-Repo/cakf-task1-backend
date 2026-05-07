@@ -23,6 +23,8 @@ RUN uv sync --frozen --no-install-project --no-dev
 
 COPY --chown=appuser:appuser . .
 
-RUN uv run alembic upgrade head
+COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
 
-CMD ["uv", "run", "fastapi", "run", "app/main.py", "--port", "8000"]
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]

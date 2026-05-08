@@ -31,5 +31,5 @@ async def notify_birthday():
 
     logger.info(f"Today {len(emails)} users have birthday")
 
-    if emails:
-        await email_service.send_email(emails, "Happy birthday", "Special offer for you")
+    for email in emails:
+        await email_service.send_email(email, "Happy birthday", "Special offer for you")

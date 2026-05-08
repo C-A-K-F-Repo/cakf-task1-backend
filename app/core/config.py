@@ -39,15 +39,6 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "user"
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "fastapi_db"
-    DATABASE_URL: str = ""
-
-    @model_validator(mode="after")
-    def populate_db_url(self) -> "Settings":
-        if not self.DB_URL:
-            self.DB_URL = self.DATABASE_URL
-        if not self.DB_URL:
-            raise ValueError("DB_URL or DATABASE_URL must be set")
-        return self
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

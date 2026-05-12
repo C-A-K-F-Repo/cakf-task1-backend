@@ -19,6 +19,8 @@ jobs:
           context: .
           push: true
           file: deployment/Dockerfile
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
           tags: | 
-            ghcr.io/${{ github.repository}}:${{ github.sha }}
-            ghcr.io/${{ github.repository}}:latest
+            ghcr.io/c-a-k-f-repo/task1-backend:${{ github.sha }}
+            ghcr.io/c-a-k-f-repo/task1-backend:latest

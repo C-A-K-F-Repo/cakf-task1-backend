@@ -58,5 +58,6 @@ Use exactly one profile at a time:
    - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
    - Health check: [http://127.0.0.1:8000/api/v1/health/](http://127.0.0.1:8000/api/v1/health/)
    - Grafana: [http://127.0.0.1:3000](http://127.0.0.1:3000) (`admin` / `admin`)
+   - Grafana datasources are provisioned automatically on startup: `VictoriaLogs` and `VictoriaTraces`
    - VictoriaLogs health: [http://127.0.0.1:9428/health](http://127.0.0.1:9428/health)
    - VictoriaTraces health: [http://127.0.0.1:10428/health](http://127.0.0.1:10428/health)

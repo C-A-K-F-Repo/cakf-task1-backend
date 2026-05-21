@@ -67,3 +67,31 @@ class UserRepository:
             .values(hashed_password=hashed_password)
         )
         await self.db.commit()
+
+    async def get_phone_numbers_by_ids(self, user_ids: list[UUID]) -> list[str]:
+        """Get phone numbers for multiple user IDs."""
+        result = await self.db.execute(
+            select(User.phone_number).where(User.id.in_(user_ids), User.phone_number.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_emails_by_ids(self, user_ids: list[UUID]) -> list[str]:
+        """Get emails for multiple user IDs."""
+        result = await self.db.execute(
+            select(User.email).where(User.id.in_(user_ids), User.email.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_all_phone_numbers(self) -> list[str]:
+        """Get all phone numbers."""
+        result = await self.db.execute(
+            select(User.phone_number).where(User.phone_number.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_all_emails(self) -> list[str]:
+        """Get all emails."""
+        result = await self.db.execute(
+            select(User.email).where(User.email.is_not(None))
+        )
+        return [row[0] for row in result.all()]

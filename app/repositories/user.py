@@ -95,3 +95,8 @@ class UserRepository:
             select(User.email).where(User.email.is_not(None))
         )
         return [row[0] for row in result.all()]
+    
+    async def get_all(self, limit: int, offset: int) -> list[User]:
+        query = select(User).limit(limit).offset(offset)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

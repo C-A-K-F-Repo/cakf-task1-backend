@@ -21,10 +21,7 @@ async def create_user(user_data: UserCreate, db: AsyncSession = Depends(get_db))
 @router.delete("/delete_user", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(allow_admin)])
 async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     user_repo = UserRepository(db)
-    deleted = await user_repo.delete(user_id)
-    
-    if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not Found")
+    await user_repo.delete(user_id)
     return None
 
 @router.get("/get_user_info",response_model=UserInfo,dependencies=[Depends(allow_staff)])

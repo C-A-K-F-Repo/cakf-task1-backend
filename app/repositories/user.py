@@ -97,7 +97,7 @@ class UserRepository:
         return [row[0] for row in result.all()]
     
     async def get_all(self, limit: int, offset: int) -> list[User]:
-        query = select(User).limit(limit).offset(offset)
+        query = select(User).limit(min(limit,50)).offset(offset)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
@@ -108,6 +108,9 @@ class UserRepository:
     
         if not user:
             return None
+        
+        if "role" in data:
+            user.role = data.pop("role")
     
         for key, value in data.items():
             setattr(user, key, value)

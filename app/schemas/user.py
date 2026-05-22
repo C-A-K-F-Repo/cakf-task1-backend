@@ -40,3 +40,7 @@ class UserOut(UserBase):
     role: Role
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserInfo(UserBase):
+    full_name:str
+    email: EmailStr

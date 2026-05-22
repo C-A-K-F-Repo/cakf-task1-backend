@@ -44,3 +44,7 @@ class UserOut(UserBase):
 class UserInfo(UserBase):
     full_name:str
     email: EmailStr
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None

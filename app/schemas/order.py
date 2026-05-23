@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict
-import uuid
 import datetime
+import uuid
+from pydantic import BaseModel, ConfigDict
+from app.schemas.product import ProductOut
 
 
 class OrderItemBase(BaseModel):
@@ -8,6 +9,10 @@ class OrderItemBase(BaseModel):
     quantity: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OrderItemOut(OrderItemBase):
+    product: ProductOut
 
 
 class OrderBase(BaseModel):
@@ -21,6 +26,7 @@ class OrderIn(OrderBase):
 class OrderOut(OrderBase):
     id: uuid.UUID
     user_id: uuid.UUID
-    items: list[OrderItemBase]
+    items: list[OrderItemOut]
+    date: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)

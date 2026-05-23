@@ -1,18 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import uuid
 import datetime
 
 
-class OrderBase(BaseModel):
-    user_id: uuid.UUID
-    date: datetime.datetime
-    product_type: str
+class OrderItemBase(BaseModel):
+    product_id: uuid.UUID
     quantity: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderBase(BaseModel):
+    pass
 
 
 class OrderIn(OrderBase):
-    pass
+    items: list[OrderItemBase]
 
 
 class OrderOut(OrderBase):
     id: uuid.UUID
+    user_id: uuid.UUID
+    items: list[OrderItemBase]
+
+    model_config = ConfigDict(from_attributes=True)

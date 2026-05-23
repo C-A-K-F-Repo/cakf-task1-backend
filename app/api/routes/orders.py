@@ -1,10 +1,7 @@
 from fastapi import APIRouter, status, HTTPException, Depends
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.dependencies.db import SessionDep
-from app.dependencies.user import get_current_user, allow_staff
-from app.models.order import OrderModel, OrderItem
+from app.dependencies.user import get_current_user
 from app.repositories.order import OrderRepository
 from app.schemas.order import OrderIn, OrderOut
 import uuid
@@ -18,9 +15,16 @@ async def create_order(order_in: OrderIn, db: SessionDep, current_user = Depends
 
 
 @router.get("/me", response_model=list[OrderOut])
-async def get_orders_for_user(db: SessionDep, skip: int = 0, limit: int = 100, current_user = Depends(get_current_user)):
-    limit = min(limit, 100)
-    return await OrderRepository(db).get_by_user(current_user["sub"], skip, limit)
+async def get_orders_for_user(db: SessionDep, current_user = Depends(get_current_user)):
+    return await OrderRepository(db).get_by_user(current_user["sub"])
+
+
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_orders(order_ids: list[uuid.UUID] | None, db: SessionDep, current_user = Depends(get_current_user)):
+    if not order_ids:
+        await OrderRepository(db).delete_all_for_user(current_user["sub"])
+    else:
+        await OrderRepository(db).delete_selected_for_user(current_user["sub"], order_ids)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

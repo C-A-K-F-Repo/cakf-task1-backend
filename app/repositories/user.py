@@ -1,8 +1,10 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload
 
 from app.core.security import password_hash
+from app.models import OrderModel, OrderItem
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -14,6 +16,19 @@ class UserRepository:
     async def get_by_id(self, user_id: UUID | str) -> User | None:
         """Get user by ID."""
         result = await self.db.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
+
+    async def get_by_id_with_orders(self, user_id: UUID | str) -> User | None:
+        result = await self.db.execute(select(User).where(User.id == user_id).options(
+            selectinload(User.orders)
+            .selectinload(OrderModel.items)
+            .selectinload(OrderItem.product)
+        ))
+        return result.scalar_one_or_none()
+
+    async def get_by_email(self, email: str) -> User | None:
+        """Get user by email."""
+        result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> User | None:

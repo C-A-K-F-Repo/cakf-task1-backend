@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.dependencies.db import get_db, SessionDep
 from app.dependencies.user import allow_staff, allow_admin, get_current_user
+from app.repositories.order import OrderRepository
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate, UserInfo, UserUpdate
 from uuid import UUID
@@ -65,5 +66,7 @@ async def delete_self(password: str, db: SessionDep, current_user=Depends(get_cu
         raise HTTPException(status_code=404, detail="User not found")
     if not password_hash.verify(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect password")
+
+    await OrderRepository(db).delete_by_user(user.id)
 
     await UserRepository(db).delete(user.id)

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -70,3 +70,11 @@ class OrderRepository:
         result = await self.db.execute(stmt)
         order = result.scalar_one_or_none()
         return order
+
+    async def delete_by_user(self, user_id: UUID):
+        stmt = (
+            delete(OrderModel)
+            .where(OrderModel.user_id == user_id)
+        )
+        result = await self.db.execute(stmt)
+        await self.db.commit()

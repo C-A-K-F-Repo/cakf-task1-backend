@@ -67,16 +67,14 @@ async def get_info(db: SessionDep, current_user=Depends(get_current_user)):
     content += f"Full name: {user.full_name}\n"
     content += f"Date of birth: {user.dob}\n"
     content += f"Role: {user.role.value}\n"
+    content += f"Phone: {user.phone_number}\n"
+    content += f"delivery_address: {user.delivery_address}\n"
     for order in user.orders:
         content += f"  Order: {order.id.hex}\n"
         for item in order.items:
             content += f"    Item: {item.product.name}\n"
             content += f"    Quantity: {item.quantity}\n"
             content += f"    Price: {item.product.price}\n"
-    # content += f"Orders: {user.orders}\n"
-    content += f"Email: {user.email}\n"
-    content += f"Phone: {user.phone_number}\n"
-    content += f"delivery_address: {user.delivery_address}\n"
 
     return StreamingResponse(
         io.BytesIO(content.encode("utf-8")),

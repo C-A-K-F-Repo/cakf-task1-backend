@@ -31,11 +31,6 @@ class UserRepository:
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, email: str) -> User | None:
-        """Get user by email."""
-        result = await self.db.execute(select(User).where(User.email == email))
-        return result.scalar_one_or_none()
-
     async def create(self, user: UserCreate) -> User:
         """Create a new user."""
         user_data = user.model_dump()

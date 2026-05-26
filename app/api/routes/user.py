@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+import io
+
+from fastapi import APIRouter,Depends,status,HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.dependencies.db import get_db, SessionDep
@@ -70,3 +73,29 @@ async def delete_self(password: str, db: SessionDep, current_user=Depends(get_cu
     await OrderRepository(db).delete_by_user(user.id)
 
     await UserRepository(db).delete(user.id)
+
+
+@router.get("/info")
+async def get_info(db: SessionDep, current_user=Depends(get_current_user)):
+    user = await UserRepository(db).get_by_id_with_orders(current_user["sub"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    content = f"User: {user.email}\n"
+    content += f"Full name: {user.full_name}\n"
+    content += f"Date of birth: {user.dob}\n"
+    content += f"Role: {user.role.value}\n"
+    content += f"Phone: {user.phone_number}\n"
+    content += f"delivery_address: {user.delivery_address}\n"
+    for order in user.orders:
+        content += f"  Order: {order.id.hex}\n"
+        for item in order.items:
+            content += f"    Item: {item.product.name}\n"
+            content += f"    Quantity: {item.quantity}\n"
+            content += f"    Price: {item.product.price}\n"
+
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8")),
+        media_type="text/plain",
+        headers={"Content-Disposition": "attachment; filename=user_info.txt"}
+    )

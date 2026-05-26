@@ -22,7 +22,8 @@ class ProductRepository:
             new_product = Product(
                 name=product_in.name,
                 price=product_in.price,
-                product_type_id=product_in.product_type_id
+                product_type_id=product_in.product_type_id,
+                description=product_in.description
             )
             self.db.add(new_product)
             await self.db.commit()
@@ -30,3 +31,13 @@ class ProductRepository:
             return new_product
         except IntegrityError:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product with that name and type id already exists")
+
+    async def delete(self, product_id):
+        stmt = select(Product).where(Product.id == product_id)
+        result = await self.db.execute(stmt)
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+        await self.db.delete(product)
+        await self.db.commit()

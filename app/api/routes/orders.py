@@ -20,7 +20,7 @@ async def create_order(order_in: OrderIn, db: SessionDep, current_user = Depends
 @router.get("/me", response_model=list[OrderOut])
 async def get_orders_for_user(db: SessionDep, skip: int = 0, limit: int = 100, current_user = Depends(get_current_user)):
     limit = min(limit, 100)
-    return await OrderRepository(db).get_by_user(current_user["sub"], skip, limit)
+    return await OrderRepository(db).get_by_user(current_user["sub"], limit=limit,skip=skip)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

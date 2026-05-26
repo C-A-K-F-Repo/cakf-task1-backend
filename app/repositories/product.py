@@ -22,7 +22,8 @@ class ProductRepository:
             new_product = Product(
                 name=product_in.name,
                 price=product_in.price,
-                product_type_id=product_in.product_type_id
+                product_type_id=product_in.product_type_id,
+                description=product_in.description
             )
             self.db.add(new_product)
             await self.db.commit()

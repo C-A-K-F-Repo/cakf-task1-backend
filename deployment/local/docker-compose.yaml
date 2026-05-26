@@ -75,11 +75,14 @@ services:
       - "3000:3000"
     env_file:
       - ./../../.env
+    environment:
+      GF_INSTALL_PLUGINS: victoriametrics-logs-datasource
     depends_on:
       - victorialogs
       - victoriatraces
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
 
   db:
     profiles: ["app", "obs"]

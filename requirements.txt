@@ -19,3 +19,8 @@ opentelemetry-instrumentation-fastapi==0.62b0
 opentelemetry-instrumentation-logging==0.62b0
 opentelemetry-instrumentation-sqlalchemy==0.62b0
 apscheduler==3.11.2
+pytest==9.0.3
+httpx==0.28.1
+python-multipart==0.0.28
+pwdlib[argon2]==0.3.0
+aiofiles==25.1.0

@@ -1,8 +1,10 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload
 
 from app.core.security import password_hash
+from app.models import OrderModel, OrderItem
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -14,6 +16,14 @@ class UserRepository:
     async def get_by_id(self, user_id: UUID | str) -> User | None:
         """Get user by ID."""
         result = await self.db.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
+
+    async def get_by_id_with_orders(self, user_id: UUID | str) -> User | None:
+        result = await self.db.execute(select(User).where(User.id == user_id).options(
+            selectinload(User.orders)
+            .selectinload(OrderModel.items)
+            .selectinload(OrderItem.product)
+        ))
         return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> User | None:
@@ -67,3 +77,54 @@ class UserRepository:
             .values(hashed_password=hashed_password)
         )
         await self.db.commit()
+
+    async def get_phone_numbers_by_ids(self, user_ids: list[UUID]) -> list[str]:
+        """Get phone numbers for multiple user IDs."""
+        result = await self.db.execute(
+            select(User.phone_number).where(User.id.in_(user_ids), User.phone_number.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_emails_by_ids(self, user_ids: list[UUID]) -> list[str]:
+        """Get emails for multiple user IDs."""
+        result = await self.db.execute(
+            select(User.email).where(User.id.in_(user_ids), User.email.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_all_phone_numbers(self) -> list[str]:
+        """Get all phone numbers."""
+        result = await self.db.execute(
+            select(User.phone_number).where(User.phone_number.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+
+    async def get_all_emails(self) -> list[str]:
+        """Get all emails."""
+        result = await self.db.execute(
+            select(User.email).where(User.email.is_not(None))
+        )
+        return [row[0] for row in result.all()]
+    
+    async def get_all(self, limit: int, offset: int) -> list[User]:
+        query = select(User).limit(min(limit,50)).offset(offset)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def update(self, user_id: UUID, data: dict) -> User | None:
+        query = select(User).where(User.id == user_id)
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+    
+        if not user:
+            return None
+        
+        if "role" in data:
+            user.role = data.pop("role")
+    
+        for key, value in data.items():
+            setattr(user, key, value)
+    
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user

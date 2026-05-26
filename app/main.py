@@ -12,6 +12,7 @@ from app.core.db import SessionLocal
 from app.tasks.birthday import notify_birthday
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi.staticfiles import StaticFiles
 
 
 @asynccontextmanager
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     register_exceptions(app)
     setup_observability(app)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
     return app
 
 

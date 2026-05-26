@@ -38,6 +38,10 @@ async def get_product(product_id: uuid.UUID, db: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return product
 
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(allow_staff)])
+async def delete_product(product_id: uuid.UUID, db: SessionDep):
+    await ProductRepository(db).delete(product_id)
 STATIC_DIR = Path("static")
 STATIC_DIR.mkdir(exist_ok=True)
 

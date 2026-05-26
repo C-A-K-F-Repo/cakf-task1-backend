@@ -9,6 +9,10 @@ from app.models.product_type import ProductType
 from app.repositories.product import ProductRepository
 from app.schemas.product import ProductCreate, ProductOut
 
+import aiofiles
+from pathlib import Path
+from fastapi import UploadFile, File
+
 router = APIRouter()
 
 
@@ -32,4 +36,43 @@ async def get_product(product_id: uuid.UUID, db: SessionDep):
     product = result.scalar_one_or_none()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    return product
+
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(allow_staff)])
+async def delete_product(product_id: uuid.UUID, db: SessionDep):
+    await ProductRepository(db).delete(product_id)
+STATIC_DIR = Path("static")
+STATIC_DIR.mkdir(exist_ok=True)
+
+@router.post("/{product_id}/image", response_model=ProductOut, dependencies=[Depends(allow_staff)])
+async def upload_product_image(product_id: uuid.UUID, db: SessionDep, file: UploadFile = File(...)):
+    ext = Path(file.filename).suffix.lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 5MB)")
+
+    query = select(Product).where(Product.id == product_id)
+    result = await db.execute(query)
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if product.image_url:
+        old_path = Path(product.image_url.lstrip("/"))
+        if old_path.exists():
+            old_path.unlink()
+
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = STATIC_DIR / filename
+
+    async with aiofiles.open(file_path, "wb") as buffer:
+        await buffer.write(content)
+
+    product.image_url = f"/static/{filename}"
+    await db.commit()
+    await db.refresh(product)
     return product

@@ -22,4 +22,4 @@ class Product(Base):
         UniqueConstraint('name', 'product_type_id'),
     )
 
-    order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product")
+    order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product", cascade="all, delete-orphan")

@@ -9,6 +9,7 @@ from app.core.observability import setup_observability
 from app.exceptions import register_exceptions
 from app.core.redis import get_redis_client, close_redis_client
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 
 
 @asynccontextmanager
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     register_exceptions(app)
     setup_observability(app)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
     return app
 
 

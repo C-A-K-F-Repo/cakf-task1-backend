@@ -40,3 +40,16 @@ class UserOut(UserBase):
     role: Role
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserInfo(BaseModel):
+    id:uuid.UUID
+    full_name:str
+    email: EmailStr
+    role: Role
+    model_config = ConfigDict(from_attributes=True)
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+    role : Role | None = None
+

@@ -35,11 +35,31 @@ class UserCreate(UserBase):
     role: Optional[Role] = Role.USER
 
 
-class UserOut(UserBase):
+class UserOut(BaseModel):
     id: uuid.UUID
+    email: EmailStr
+    full_name: Optional[str] = None
+    dob: Optional[datetime.date] = None
+    delivery_address: Optional[str] = None
+    phone_number: Optional[str] = None
     role: Role
+    has_password: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordUpdate(BaseModel):
+    current_password: Optional[str] = None
+    new_password: str = Field(min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_complexity(cls, value: str) -> str:
+        has_letter = any(ch.isalpha() for ch in value)
+        has_special = any(not ch.isalnum() for ch in value)
+        if not has_letter or not has_special:
+            raise ValueError("Password must contain at least one letter and one special character")
+        return value
 
 
 class ProfileUpdate(BaseModel):

@@ -47,6 +47,7 @@ class UserRepository:
     async def create_from_oauth(self, email: str) -> User:
         new_user = User(
             email=email,
+            is_active=True,
         )
 
         self.db.add(new_user)
@@ -74,6 +75,16 @@ class UserRepository:
         result = await self.db.execute(
             update(User)
             .where(User.email == email)
+            .values(hashed_password=hashed_password)
+        )
+        await self.db.commit()
+
+    async def update_password_by_id(self, user_id: UUID, new_password: str) -> None:
+        """Update the user's password by user id."""
+        hashed_password = password_hash.hash(new_password)
+        await self.db.execute(
+            update(User)
+            .where(User.id == user_id)
             .values(hashed_password=hashed_password)
         )
         await self.db.commit()

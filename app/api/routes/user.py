@@ -18,6 +18,7 @@ from app.repositories.user import UserRepository
 from app.schemas.user import (
     UserOut,
     ProfileUpdate,
+    PasswordUpdate,
     EmailUpdateRequest,
     EmailUpdateVerify,
     PhoneUpdateRequest,
@@ -26,6 +27,7 @@ from app.schemas.user import (
     UserInfo,
     UserUpdate,
 )
+from app.core.security import password_hash
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -46,6 +48,33 @@ async def update_profile(
     update_data = payload.model_dump(exclude_unset=True)
     updated_user = await user_repo.update(current_user.id, **update_data)
     return updated_user
+
+
+@router.post("/me/password", status_code=status.HTTP_200_OK)
+async def set_my_password(
+    payload: PasswordUpdate,
+    db: SessionDep,
+    current_user: User = Depends(get_current_active_user)
+):
+    if current_user.hashed_password is not None:
+        if not payload.current_password or not password_hash.verify(
+            payload.current_password, current_user.hashed_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+    await UserRepository(db).update_password_by_id(current_user.id, payload.new_password)
+    return {"message": "Password updated successfully"}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_my_account(
+    db: SessionDep,
+    current_user: User = Depends(get_current_active_user)
+):
+    await UserRepository(db).delete(current_user.id)
+    return None
 
 
 @router.post("/me/email/request", status_code=status.HTTP_202_ACCEPTED)

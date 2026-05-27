@@ -27,3 +27,7 @@ class User(Base):
     delivery_address: Mapped[str] = mapped_column(String(255), nullable=True)
 
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="user")
+
+    @property
+    def has_password(self) -> bool:
+        return self.hashed_password is not None

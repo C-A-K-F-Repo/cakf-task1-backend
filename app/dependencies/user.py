@@ -20,8 +20,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
 
 
 async def get_current_active_user(
+    db: SessionDep,
     current_user_token: dict[str, Any] = Depends(get_current_user),
-    db: SessionDep = Depends()
 ) -> User:
     user_repo = UserRepository(db)
     user = await user_repo.get_by_id(current_user_token["sub"])

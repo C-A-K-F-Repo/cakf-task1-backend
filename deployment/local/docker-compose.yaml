@@ -11,6 +11,7 @@ x-api-common: &api-common
     UV_LINK_MODE: copy
   volumes:
     - ../..:/app
+    - /app/.venv
   command: ["--reload"]
 
 services:

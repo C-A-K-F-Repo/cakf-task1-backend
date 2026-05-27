@@ -33,22 +33,23 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: uuid.UUID
     role: Role
+    has_password: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserInfo(BaseModel):
-    id: uuid.UUID
-    full_name: str
-    email: EmailStr
-    role: Role
-    model_config = ConfigDict(from_attributes=True)
+class PasswordUpdate(BaseModel):
+    current_password: Optional[str] = None
+    new_password: str = Field(min_length=8)
 
-
-class UserUpdate(BaseModel):
-    full_name: str | None = None
-    email: EmailStr | None = None
-    role: Role | None = None
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_complexity(cls, value: str) -> str:
+        has_letter = any(ch.isalpha() for ch in value)
+        has_special = any(not ch.isalnum() for ch in value)
+        if not has_letter or not has_special:
+            raise ValueError("Password must contain at least one letter and one special character")
+        return value
 
 
 class ProfileUpdate(BaseModel):
@@ -71,3 +72,17 @@ class PhoneUpdateRequest(BaseModel):
 
 class PhoneUpdateVerify(BaseModel):
     code: str
+
+
+class UserInfo(BaseModel):
+    id: uuid.UUID
+    full_name: str
+    email: EmailStr
+    role: Role
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+    role: Role | None = None

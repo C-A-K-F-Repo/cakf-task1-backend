@@ -34,7 +34,6 @@ from app.core.audit import audit_event, hash_identifier, mask_phone
 
 router = APIRouter()
 
-# --- Existing modern me routes ---
 
 @router.get("/me", response_model=UserOut)
 async def get_my_profile(current_user: User = Depends(get_current_active_user)):
@@ -101,6 +100,15 @@ async def set_my_password(
         request=request,
     )
     return {"message": "Password updated successfully"}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_my_account(
+    db: SessionDep,
+    current_user: User = Depends(get_current_active_user)
+):
+    await UserRepository(db).delete(current_user.id)
+    return None
 
 
 @router.post("/me/email/request", status_code=status.HTTP_202_ACCEPTED)
@@ -188,8 +196,6 @@ async def verify_phone_update(
     )
     return {"message": "Phone number updated successfully"}
 
-
-# --- Admin management routes ---
 
 @router.post("/create_user", status_code=status.HTTP_201_CREATED, dependencies=[Depends(allow_admin)])
 async def create_user(user_data: UserCreate, request: Request, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):

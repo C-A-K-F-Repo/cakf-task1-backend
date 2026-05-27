@@ -30,8 +30,13 @@ class UserCreate(UserBase):
     role: Optional[Role] = Role.USER
 
 
-class UserOut(UserBase):
+class UserOut(BaseModel):
     id: uuid.UUID
+    email: EmailStr
+    full_name: Optional[str] = None
+    dob: Optional[datetime.date] = None
+    delivery_address: Optional[str] = None
+    phone_number: Optional[str] = None
     role: Role
     has_password: bool = False
 
@@ -76,7 +81,7 @@ class PhoneUpdateVerify(BaseModel):
 
 class UserInfo(BaseModel):
     id: uuid.UUID
-    full_name: str
+    full_name: Optional[str] = None
     email: EmailStr
     role: Role
     model_config = ConfigDict(from_attributes=True)

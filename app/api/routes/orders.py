@@ -26,6 +26,7 @@ async def create_order(order_in: OrderIn, db: SessionDep, request: Request, curr
     return order
 
 
+
 @router.get("/", response_model=list[OrderAdminOut], dependencies=[Depends(allow_staff)])
 async def get_all_orders(db: SessionDep, request: Request, limit: int = 100, skip: int = 0, current_user = Depends(get_current_user)):
     orders = await OrderRepository(db).get_all_with_users(limit=limit, skip=skip)
@@ -50,11 +51,13 @@ async def admin_delete_order(order_id: uuid.UUID, db: SessionDep, request: Reque
     return None
 
 
+
 @router.get("/me", response_model=list[OrderOut])
 async def get_orders_for_user(db: SessionDep, request: Request, current_user = Depends(get_current_user)):
     orders = await OrderRepository(db).get_by_user(current_user["sub"])
     audit_event("order.list.self", "success", actor_user_id=current_user.get("sub"), actor_role=current_user.get("role"), metadata={"result_count": len(orders)}, request=request)
     return orders
+
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
@@ -65,6 +68,7 @@ async def delete_orders(order_ids: list[uuid.UUID] | None, db: SessionDep, reque
     else:
         await OrderRepository(db).delete_selected_for_user(current_user["sub"], order_ids)
         audit_event("order.delete.self_selected", "success", actor_user_id=current_user.get("sub"), actor_role=current_user.get("role"), metadata={"selected_count": len(order_ids)}, request=request)
+
 
 
 @router.get("/{order_id}", response_model=OrderOut)

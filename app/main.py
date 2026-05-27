@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 async def seed_admin() -> None:
     """Ensure a default administrator exists for first login."""
+
     from app.core.personal_data_crypto import lookup_hash, normalize_email
     from app.core.security import password_hash
     from app.models.user import User

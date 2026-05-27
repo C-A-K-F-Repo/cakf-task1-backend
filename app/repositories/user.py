@@ -151,21 +151,3 @@ class UserRepository:
         query = select(User).limit(min(limit,50)).offset(offset)
         result = await self.db.execute(query)
         return list(result.scalars().all())
-
-    async def update(self, user_id: UUID, data: dict) -> User | None:
-        query = select(User).where(User.id == user_id)
-        result = await self.db.execute(query)
-        user = result.scalar_one_or_none()
-    
-        if not user:
-            return None
-        
-        if "role" in data:
-            user.role = data.pop("role")
-    
-        for key, value in data.items():
-            setattr(user, key, value)
-    
-        await self.db.commit()
-        await self.db.refresh(user)
-        return user

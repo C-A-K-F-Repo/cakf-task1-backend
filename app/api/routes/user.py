@@ -31,7 +31,7 @@ from app.schemas.user import (
 from app.core.security import password_hash
 from app.core.audit import audit_event, hash_identifier, mask_phone
 from app.services.user_service import UserService
-from app.core.audit import audit_event, hash_identifier, mask_phone
+
 
 router = APIRouter()
 
@@ -110,6 +110,7 @@ async def delete_my_account(
 ):
     await UserRepository(db).delete(current_user.id)
     return None
+
 
 
 @router.post("/me/email/request", status_code=status.HTTP_202_ACCEPTED)

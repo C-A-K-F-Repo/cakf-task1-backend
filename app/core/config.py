@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     FRONTEND_URL: str = "http://localhost:5173"
 
+    ADMIN_EMAIL: str = "admin@cakf.com"
+    ADMIN_PASSWORD: SecretStr = SecretStr("Admin12345!")
+    ADMIN_FULL_NAME: str = "Administrator"
+
     DB_URL: str
 
     POSTGRES_USER: str = "user"

@@ -40,3 +40,25 @@ class UserOut(UserBase):
     role: Role
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    dob: Optional[datetime.date] = None
+    delivery_address: Optional[str] = None
+
+
+class EmailUpdateRequest(BaseModel):
+    new_email: EmailStr
+
+
+class EmailUpdateVerify(BaseModel):
+    code: str
+
+
+class PhoneUpdateRequest(BaseModel):
+    new_phone: Annotated[PhoneNumber, PhoneNumberValidator(number_format="E164")]
+
+
+class PhoneUpdateVerify(BaseModel):
+    code: str

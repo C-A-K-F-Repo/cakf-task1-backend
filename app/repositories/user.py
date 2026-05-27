@@ -68,6 +68,21 @@ class UserRepository:
         )
         await self.db.commit()
 
+    async def update(self, user_id: UUID, **kwargs) -> User:
+        """Update user fields."""
+        await self.db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(**kwargs)
+        )
+        await self.db.commit()
+        return await self.get_by_id(user_id)
+
+    async def get_by_phone(self, phone_number: str) -> User | None:
+        """Get user by phone number."""
+        result = await self.db.execute(select(User).where(User.phone_number == phone_number))
+        return result.scalar_one_or_none()
+
     async def get_phone_numbers_by_ids(self, user_ids: list[UUID]) -> list[str]:
         """Get phone numbers for multiple user IDs."""
         result = await self.db.execute(

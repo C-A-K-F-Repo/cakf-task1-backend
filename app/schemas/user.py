@@ -1,15 +1,10 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 import datetime
 from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
-from enum import StrEnum
 from typing import Optional, Annotated
 import uuid
 
-
-class Role(StrEnum):
-    USER = "User"
-    ADVANCED_USER = "Advanced_User"
-    ADMINISTRATOR = "Administrator"
+from app.models.roles import Role
 
 
 class UserBase(BaseModel):
@@ -41,15 +36,38 @@ class UserOut(UserBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class UserInfo(BaseModel):
-    id:uuid.UUID
-    full_name:str
+    id: uuid.UUID
+    full_name: str
     email: EmailStr
     role: Role
     model_config = ConfigDict(from_attributes=True)
 
+
 class UserUpdate(BaseModel):
     full_name: str | None = None
     email: EmailStr | None = None
-    role : Role | None = None
+    role: Role | None = None
 
+
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    dob: Optional[datetime.date] = None
+    delivery_address: Optional[str] = None
+
+
+class EmailUpdateRequest(BaseModel):
+    new_email: EmailStr
+
+
+class EmailUpdateVerify(BaseModel):
+    code: str
+
+
+class PhoneUpdateRequest(BaseModel):
+    new_phone: Annotated[PhoneNumber, PhoneNumberValidator(number_format="E164")]
+
+
+class PhoneUpdateVerify(BaseModel):
+    code: str

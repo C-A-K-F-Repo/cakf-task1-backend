@@ -19,6 +19,19 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
 
+async def get_current_active_user(
+    current_user_token: dict[str, Any] = Depends(get_current_user),
+    db: SessionDep = Depends()
+) -> User:
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_id(current_user_token["sub"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user
+
+
 class RoleChecker:
     def __init__(self, allowed_roles: list[Role]):
         self.allowed_roles = [role.value for role in allowed_roles]

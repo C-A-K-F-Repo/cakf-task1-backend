@@ -36,9 +36,8 @@ class RoleChecker:
     def __init__(self, allowed_roles: list[Role]):
         self.allowed_roles = [role.value for role in allowed_roles]
 
-    def __call__(self, current_user = Depends(get_current_user)):
-        print(current_user["role"], self.allowed_roles)
-        if current_user["role"] in self.allowed_roles:
+    def __call__(self, current_user = Depends(get_current_active_user)):
+        if current_user.role.value in self.allowed_roles:
             return True
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 

@@ -1,6 +1,8 @@
 import os
 
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret")
+os.environ.setdefault("PERSONAL_DATA_ENCRYPTION_KEY", "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=")
+os.environ.setdefault("PERSONAL_DATA_LOOKUP_KEY", "ZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTA=")
 os.environ.setdefault("FROM_EMAIL", "test@example.com")
 os.environ.setdefault("APP_PASSWORD", "test-app-password")
 os.environ.setdefault("TWILIO_ACCOUNT_SID", "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")

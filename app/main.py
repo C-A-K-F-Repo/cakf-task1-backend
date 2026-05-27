@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 async def seed_admin() -> None:
     """Ensure a default administrator exists for first login."""
     from app.core.db import SessionLocal
+    from app.core.personal_data_crypto import lookup_hash, normalize_email
     from app.core.security import password_hash
     from app.models.user import User
     from app.repositories.user import UserRepository
@@ -24,8 +25,10 @@ async def seed_admin() -> None:
         repo = UserRepository(db)
         if await repo.get_by_email(settings.ADMIN_EMAIL) is not None:
             return
+        admin_email = normalize_email(settings.ADMIN_EMAIL)
         db.add(User(
-            email=settings.ADMIN_EMAIL,
+            email=admin_email,
+            email_lookup=lookup_hash(admin_email),
             full_name=settings.ADMIN_FULL_NAME,
             role=Role.ADMINISTRATOR,
             is_active=True,

@@ -1,9 +1,11 @@
 import secrets
 import logging
+import json
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis_client
+from app.core.personal_data_crypto import decrypt, encrypt
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.services.email_notifications import email_service
@@ -26,7 +28,11 @@ class UserService:
         code = secrets.token_hex(3).upper()
         
         # Store pending email and code in redis
-        await redis.setex(f"email_update:{user.id}", 600, f"{new_email}:{code}")
+        await redis.setex(
+            f"email_update:{user.id}",
+            600,
+            json.dumps({"new_email": encrypt(new_email), "code": code}),
+        )
         
         message = f"""
             <html>
@@ -56,7 +62,9 @@ class UserService:
         if not stored_data:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No pending email update found")
         
-        new_email, stored_code = stored_data.split(":")
+        stored_payload = json.loads(stored_data)
+        new_email = decrypt(stored_payload["new_email"])
+        stored_code = stored_payload["code"]
         
         if code.upper() != stored_code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code")
@@ -70,13 +78,14 @@ class UserService:
 
         redis = await get_redis_client()
         # Twilio Verify handles code generation and storage, but we should remember which phone was requested
-        await redis.setex(f"phone_update:{user.id}", 600, new_phone)
+        await redis.setex(f"phone_update:{user.id}", 600, encrypt(new_phone))
         
         await self.sms_service.send_otp(new_phone)
 
     async def verify_phone_update(self, user: User, code: str):
         redis = await get_redis_client()
-        new_phone = await redis.get(f"phone_update:{user.id}")
+        encrypted_phone = await redis.get(f"phone_update:{user.id}")
+        new_phone = decrypt(encrypted_phone)
         
         if not new_phone:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No pending phone update found")

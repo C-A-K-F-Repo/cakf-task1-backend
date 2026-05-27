@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_STDOUT_ENABLED: bool = True
     JWT_SECRET: SecretStr
+    PERSONAL_DATA_ENCRYPTION_KEY: SecretStr = SecretStr("MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=")
+    PERSONAL_DATA_LOOKUP_KEY: SecretStr = SecretStr("ZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTA=")
 
     FROM_EMAIL: str
     APP_PASSWORD: SecretStr

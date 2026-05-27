@@ -29,6 +29,7 @@ from app.schemas.user import (
     UserUpdate,
 )
 from app.core.security import password_hash
+from app.core.audit import audit_event, hash_identifier, mask_phone
 from app.services.user_service import UserService
 from app.core.audit import audit_event, hash_identifier, mask_phone
 

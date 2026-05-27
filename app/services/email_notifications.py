@@ -9,6 +9,7 @@ from aiosmtplib import SMTP
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.personal_data_crypto import lookup_hash
 from app.core.redis import get_redis_client
 from app.repositories import UserRepository
 
@@ -25,7 +26,7 @@ class EmailService:
         self.context = ssl.create_default_context()
 
     async def send_verification_email(self, email):
-        token = jwt.encode({"email": email, "exp": datetime.now(UTC) + timedelta(minutes=10)}, settings.JWT_SECRET.get_secret_value(), algorithm="HS256")
+        token = jwt.encode({"email_lookup": lookup_hash(email), "exp": datetime.now(UTC) + timedelta(minutes=10)}, settings.JWT_SECRET.get_secret_value(), algorithm="HS256")
         url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
         message = f"""
                     <html>
@@ -97,7 +98,7 @@ class EmailService:
             """
         try:
             await self.send_email(email, 'Код для відновлення пароля.', message)
-            await redis.setex(name=email, time=300, value=recovery_code)
+            await redis.setex(name=f"account_recovery:{lookup_hash(email)}", time=300, value=recovery_code)
         except aiosmtplib.errors.SMTPException as e:
             logger.error(f"Error sending email: {e}")
             return None
@@ -106,11 +107,12 @@ class EmailService:
     async def verify(email: str,user_code: str) -> bool:
         redis = await get_redis_client()
 
-        r_code = await redis.get(email)
+        key = f"account_recovery:{lookup_hash(email)}"
+        r_code = await redis.get(key)
         if not r_code:
             return False
         if r_code == user_code.upper():
-            await redis.delete(email)
+            await redis.delete(key)
             return True
         return False
 
@@ -118,8 +120,8 @@ class EmailService:
     async def verify_token(db: AsyncSession, token: str) -> str | None:
         try:
             payload = jwt.decode(token, settings.JWT_SECRET.get_secret_value(), algorithms=["HS256"])
-            await UserRepository(db).set_active(payload["email"], True)
-            return payload["email"]
+            await UserRepository(db).set_active_by_lookup(payload["email_lookup"], True)
+            return payload["email_lookup"]
         except jwt.ExpiredSignatureError:
             return None
 

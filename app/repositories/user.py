@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 
+from app.core.personal_data_crypto import lookup_hash, normalize_email
 from app.core.security import password_hash
 from app.models import OrderModel, OrderItem
 from app.models.user import User
@@ -28,13 +29,16 @@ class UserRepository:
 
     async def get_by_email(self, email: str) -> User | None:
         """Get user by email."""
-        result = await self.db.execute(select(User).where(User.email == email))
+        result = await self.db.execute(select(User).where(User.email_lookup == lookup_hash(email)))
         return result.scalar_one_or_none()
 
     async def create(self, user: UserCreate) -> User:
         """Create a new user."""
         user_data = user.model_dump()
         raw_password = user_data.pop("password")
+        user_data["email"] = normalize_email(str(user_data["email"]))
+        user_data["email_lookup"] = lookup_hash(user_data["email"])
+        user_data["phone_number_lookup"] = lookup_hash(user_data.get("phone_number"))
         user_data["hashed_password"] = password_hash.hash(raw_password)
         
         new_user = User(**user_data)
@@ -45,8 +49,10 @@ class UserRepository:
         return new_user
 
     async def create_from_oauth(self, email: str) -> User:
+        normalized_email = normalize_email(email)
         new_user = User(
-            email=email,
+            email=normalized_email,
+            email_lookup=lookup_hash(normalized_email),
             is_active=True,
         )
 
@@ -62,9 +68,13 @@ class UserRepository:
 
     async def set_active(self, email: str, active: bool) -> None:
         """Set the user active status."""
+        await self.set_active_by_lookup(lookup_hash(email), active)
+
+    async def set_active_by_lookup(self, email_lookup: str, active: bool) -> None:
+        """Set the user active status by email lookup hash."""
         await self.db.execute(
             update(User)
-            .where(User.email == email)
+            .where(User.email_lookup == email_lookup)
             .values(is_active=active)
         )
         await self.db.commit()
@@ -74,7 +84,7 @@ class UserRepository:
         hashed_password = password_hash.hash(new_password)
         result = await self.db.execute(
             update(User)
-            .where(User.email == email)
+            .where(User.email_lookup == lookup_hash(email))
             .values(hashed_password=hashed_password)
         )
         await self.db.commit()
@@ -91,6 +101,11 @@ class UserRepository:
 
     async def update(self, user_id: UUID, **kwargs) -> User:
         """Update user fields."""
+        if "email" in kwargs and kwargs["email"] is not None:
+            kwargs["email"] = normalize_email(str(kwargs["email"]))
+            kwargs["email_lookup"] = lookup_hash(kwargs["email"])
+        if "phone_number" in kwargs:
+            kwargs["phone_number_lookup"] = lookup_hash(kwargs.get("phone_number"))
         await self.db.execute(
             update(User)
             .where(User.id == user_id)
@@ -101,7 +116,7 @@ class UserRepository:
 
     async def get_by_phone(self, phone_number: str) -> User | None:
         """Get user by phone number."""
-        result = await self.db.execute(select(User).where(User.phone_number == phone_number))
+        result = await self.db.execute(select(User).where(User.phone_number_lookup == lookup_hash(phone_number)))
         return result.scalar_one_or_none()
 
     async def get_phone_numbers_by_ids(self, user_ids: list[UUID]) -> list[str]:

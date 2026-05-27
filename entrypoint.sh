@@ -2,6 +2,7 @@
 set -e
 
 # Run database migrations
+alembic merge heads
 uv run alembic upgrade head
 
 # Start the application with any passed arguments

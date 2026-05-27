@@ -1,0 +1,129 @@
+version: "3.8"
+
+services:
+  api:
+    image: ${BACKEND_IMAGE:-ghcr.io/c-a-k-f-repo/task1-backend:latest}
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      FROM_EMAIL: ${FROM_EMAIL:?FROM_EMAIL is required}
+      APP_PASSWORD: ${APP_PASSWORD:?APP_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:?TWILIO_ACCOUNT_SID is required}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:?TWILIO_AUTH_TOKEN is required}
+      TWILIO_SERVICE_SID: ${TWILIO_SERVICE_SID:?TWILIO_SERVICE_SID is required}
+      TWILIO_SENDER_PHONE: ${TWILIO_SENDER_PHONE:?TWILIO_SENDER_PHONE is required}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+      FRONTEND_URL: https://abithelp-cakf.uk
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cakf.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      ADMIN_FULL_NAME: ${ADMIN_FULL_NAME:-Administrator}
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-fastapi_db}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-fastapi_db}
+    networks:
+      - internal
+      - public
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        order: start-first
+        failure_action: rollback
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=public
+        - traefik.http.middlewares.cakf-api-https-redirect.redirectscheme.scheme=https
+        - traefik.http.routers.cakf-api-web.rule=Host(`api.abithelp-cakf.uk`)
+        - traefik.http.routers.cakf-api-web.entrypoints=web
+        - traefik.http.routers.cakf-api-web.middlewares=cakf-api-https-redirect
+        - traefik.http.routers.cakf-api.rule=Host(`api.abithelp-cakf.uk`)
+        - traefik.http.routers.cakf-api.entrypoints=websecure
+        - traefik.http.routers.cakf-api.tls=true
+        - traefik.http.routers.cakf-api.tls.certresolver=letsencrypt
+        - traefik.http.services.cakf-api.loadbalancer.server.port=8000
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.abithelp-cakf.uk
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=public
+        - traefik.http.middlewares.cakf-grafana-https-redirect.redirectscheme.scheme=https
+        - traefik.http.routers.cakf-grafana-web.rule=Host(`grafana.abithelp-cakf.uk`)
+        - traefik.http.routers.cakf-grafana-web.entrypoints=web
+        - traefik.http.routers.cakf-grafana-web.middlewares=cakf-grafana-https-redirect
+        - traefik.http.routers.cakf-grafana.rule=Host(`grafana.abithelp-cakf.uk`)
+        - traefik.http.routers.cakf-grafana.entrypoints=websecure
+        - traefik.http.routers.cakf-grafana.tls=true
+        - traefik.http.routers.cakf-grafana.tls.certresolver=letsencrypt
+        - traefik.http.services.cakf-grafana.loadbalancer.server.port=3000
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-fastapi_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-fastapi_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  public:
+    external: true
+  internal:
+    driver: overlay
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:

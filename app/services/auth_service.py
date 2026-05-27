@@ -18,7 +18,7 @@ class AuthService:
         if await UserRepository(db).get_by_email(payload.email) is not None:
             raise ValueError("User with this email already exists")
 
-        new_user = await UserRepository(db).create(payload)
+        new_user = await UserRepository(db).create(payload.model_copy(update={"role": Role.USER}))
 
         return UserOut.model_validate(new_user)
 
@@ -33,7 +33,6 @@ class AuthService:
 
         access_token = create_access_token({
             "sub": str(stored_user.id),
-            "email": stored_user.email,
             "role": stored_user.role.value
         })
         refresh_token = create_refresh_token({"sub": str(stored_user.id)})

@@ -50,12 +50,10 @@ class OrderRepository:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_by_user(self, user_id: UUID, limit: int = 100, skip: int = 0):
+    async def get_by_user(self, user_id: UUID):
         stmt = (
             select(OrderModel)
             .where(OrderModel.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
             .options(selectinload(OrderModel.items).joinedload(OrderItem.product))
         )
         result = await self.db.execute(stmt)
@@ -77,4 +75,33 @@ class OrderRepository:
             .where(OrderModel.user_id == user_id)
         )
         result = await self.db.execute(stmt)
+
+    async def delete_selected_for_user(self, user_id: UUID, order_ids: list[UUID]):
+        # Delete order items first to avoid foreign key violation
+        # We only delete items for orders that belong to the user
+        item_stmt = delete(OrderItem).where(
+            OrderItem.order_id.in_(
+                select(OrderModel.id).where(
+                    OrderModel.user_id == user_id, 
+                    OrderModel.id.in_(order_ids)
+                )
+            )
+        )
+        await self.db.execute(item_stmt)
+
+        stmt = delete(OrderModel).where(OrderModel.user_id == user_id, OrderModel.id.in_(order_ids))
+        await self.db.execute(stmt)
+        await self.db.commit()
+
+    async def delete_all_for_user(self, user_id: UUID):
+        # Delete all order items for this user's orders
+        item_stmt = delete(OrderItem).where(
+            OrderItem.order_id.in_(
+                select(OrderModel.id).where(OrderModel.user_id == user_id)
+            )
+        )
+        await self.db.execute(item_stmt)
+
+        await self.db.execute(delete(OrderModel).where(OrderModel.user_id == user_id))
+
         await self.db.commit()

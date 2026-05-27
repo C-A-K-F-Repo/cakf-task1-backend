@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class OrderItem(Base):
     __tablename__ = 'order_items'
 
-    order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.id"), primary_key=True)
+    order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), primary_key=True)
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), primary_key=True)
     quantity: Mapped[int] = mapped_column(default=1)
 
@@ -32,4 +32,4 @@ class OrderModel(Base):
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     user: Mapped["User"] = relationship(back_populates="orders")
-    items: Mapped[list["OrderItem"]] = relationship(back_populates="order")
+    items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")

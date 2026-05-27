@@ -14,6 +14,7 @@ from app.dependencies.user import (
     get_current_active_user,
 )
 from app.models.user import User
+from app.repositories.order import OrderRepository
 from app.repositories.user import UserRepository
 from app.schemas.user import (
     UserOut,
@@ -66,15 +67,6 @@ async def set_my_password(
             )
     await UserRepository(db).update_password_by_id(current_user.id, payload.new_password)
     return {"message": "Password updated successfully"}
-
-
-@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_my_account(
-    db: SessionDep,
-    current_user: User = Depends(get_current_active_user)
-):
-    await UserRepository(db).delete(current_user.id)
-    return None
 
 
 @router.post("/me/email/request", status_code=status.HTTP_202_ACCEPTED)
@@ -166,6 +158,21 @@ async def update_user(user_id: UUID, user_data: UserUpdate, db: AsyncSession = D
         raise HTTPException(status_code=404, detail="User not found")
 
     return updated_user
+
+
+@router.delete("/")
+async def delete_self(password: str, db: SessionDep, current_user=Depends(get_current_user)):
+    user = await UserRepository(db).get_by_id(current_user["sub"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.hashed_password:
+        raise HTTPException(status_code=400, detail="Set a password before deleting your account")
+    if not password_hash.verify(password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    await OrderRepository(db).delete_by_user(user.id)
+
+    await UserRepository(db).delete(user.id)
 
 
 @router.get("/info")

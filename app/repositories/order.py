@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.models import OrderModel, OrderItem
 from app.schemas.order import OrderIn
@@ -49,6 +49,25 @@ class OrderRepository:
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_all_with_users(self, limit: int = 100, skip: int = 0):
+        stmt = (
+            select(OrderModel)
+            .order_by(OrderModel.date.desc())
+            .offset(skip)
+            .limit(limit)
+            .options(
+                selectinload(OrderModel.items).joinedload(OrderItem.product),
+                joinedload(OrderModel.user),
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.unique().scalars().all()
+
+    async def delete_by_id(self, order_id: UUID):
+        await self.db.execute(delete(OrderItem).where(OrderItem.order_id == order_id))
+        await self.db.execute(delete(OrderModel).where(OrderModel.id == order_id))
+        await self.db.commit()
 
     async def get_by_user(self, user_id: UUID):
         stmt = (
@@ -96,4 +115,17 @@ class OrderRepository:
         await self.db.execute(item_stmt)
 
         await self.db.execute(delete(OrderModel).where(OrderModel.user_id == user_id))
+        await self.db.commit()
+
+    async def delete_by_user(self, user_id: UUID):
+        # Delete order items first to avoid foreign key violation
+        item_stmt = delete(OrderItem).where(
+            OrderItem.order_id.in_(
+                select(OrderModel.id).where(OrderModel.user_id == user_id)
+            )
+        )
+        await self.db.execute(item_stmt)
+
+        stmt = delete(OrderModel).where(OrderModel.user_id == user_id)
+        await self.db.execute(stmt)
         await self.db.commit()

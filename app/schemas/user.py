@@ -86,7 +86,7 @@ class PhoneUpdateVerify(BaseModel):
 
 class UserInfo(BaseModel):
     id: uuid.UUID
-    full_name: str
+    full_name: Optional[str] = None
     email: EmailStr
     role: Role
     model_config = ConfigDict(from_attributes=True)

@@ -30,3 +30,14 @@ class OrderOut(OrderBase):
     date: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OrderAdminOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    user_email: str | None = None
+    user_full_name: str | None = None
+    items: list[OrderItemOut]
+    date: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)

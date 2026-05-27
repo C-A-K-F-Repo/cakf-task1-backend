@@ -69,6 +69,13 @@ class OrderRepository:
         order = result.scalar_one_or_none()
         return order
 
+    async def delete_by_user(self, user_id: UUID):
+        stmt = (
+            delete(OrderModel)
+            .where(OrderModel.user_id == user_id)
+        )
+        result = await self.db.execute(stmt)
+
     async def delete_selected_for_user(self, user_id: UUID, order_ids: list[UUID]):
         # Delete order items first to avoid foreign key violation
         # We only delete items for orders that belong to the user
@@ -96,4 +103,5 @@ class OrderRepository:
         await self.db.execute(item_stmt)
 
         await self.db.execute(delete(OrderModel).where(OrderModel.user_id == user_id))
+
         await self.db.commit()

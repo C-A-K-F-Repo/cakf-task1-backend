@@ -1,5 +1,13 @@
 # Task 1 Backend
 
+## UML-diagram
+[link](https://app.diagrams.net/#G18hfqUKyweYrpzRoLNKt0ZssW1pXkYcji#%7B%22pageId%22%3A%22Gc_lvAdkFbzJWjvOFYQN%22%7D)
+
+## Architecture UML-diagram
+[link](https://app.diagrams.net/#G18hfqUKyweYrpzRoLNKt0ZssW1pXkYcji#%7B%22pageId%22%3A%22Q3Dqq7EHyLY_Jdj5hEPb%22%7D)
+
+## Report pdf file `report.pdf`
+
 ## Structure
 
 ```text
